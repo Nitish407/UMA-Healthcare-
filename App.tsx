@@ -9,6 +9,7 @@ import { HealthcareLocator } from './components/HealthcareLocator';
 import { ResearchLab } from './components/ResearchLab';
 import { AnatomyStudio } from './components/AnatomyStudio';
 import { VoiceRecords } from './components/VoiceRecords';
+import { UserProfileView } from './components/UserProfile';
 import { NovaHeartLogo } from './components/Logo';
 import { EmergencyButton } from './components/EmergencyButton';
 
@@ -92,6 +93,7 @@ const App: React.FC = () => {
                 case View.RESEARCH: return <ResearchLab />;
                 case View.ANATOMY: return <AnatomyStudio />;
                 case View.RECORDS: return <VoiceRecords />;
+                case View.PROFILE: return <UserProfileView />;
                 default: return <Dashboard onViewChange={handleViewChange} />;
                 }
             })()}

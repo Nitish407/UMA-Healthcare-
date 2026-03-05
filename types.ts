@@ -6,7 +6,32 @@ export enum View {
   LOCATOR = 'LOCATOR',
   RESEARCH = 'RESEARCH',
   ANATOMY = 'ANATOMY',
-  RECORDS = 'RECORDS'
+  RECORDS = 'RECORDS',
+  PROFILE = 'PROFILE'
+}
+
+export interface EmergencyContact {
+  id: string;
+  name: string;
+  relation: string;
+  phone: string;
+}
+
+export interface UserProfile {
+  personalInfo: {
+    fullName: string;
+    dateOfBirth: string;
+    gender: string;
+    bloodType: string;
+    height: string;
+    weight: string;
+  };
+  medicalHistory: {
+    allergies: string[];
+    conditions: string[];
+    medications: string[];
+  };
+  emergencyContacts: EmergencyContact[];
 }
 
 export interface ChatMessage {

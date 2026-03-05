@@ -35,6 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
 
   const NAV_ITEMS = [
     { view: View.DASHBOARD, label: "Dashboard", icon: "dashboard" },
+    { view: View.PROFILE, label: "My Profile", icon: "person" },
     { view: View.LIVE_CONSULT, label: "Live Doctor", icon: "graphic_eq" },
     { view: View.SYMPTOM_CHAT, label: "Symptom Chat", icon: "chat_bubble" },
     { view: View.IMAGING, label: "Medical Imaging", icon: "radiology" },
@@ -91,6 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
             <>
                 <div className="px-4 py-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Core Modules</div>
                 <NavItem view={View.DASHBOARD} label="Dashboard" icon="dashboard" current={currentView} onClick={onViewChange} />
+                <NavItem view={View.PROFILE} label="My Profile" icon="person" current={currentView} onClick={onViewChange} />
                 <NavItem view={View.LIVE_CONSULT} label="Live Doctor" icon="graphic_eq" current={currentView} onClick={onViewChange} />
                 
                 {/* Features Section (Combines Diagnostics & Tools) */}
