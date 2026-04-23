@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>UMA Healthcare AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family:sans-serif;text-align:center;padding:20px">
+
+  <h2>AI Healthcare Chat</h2>
+
+  <input id="input" placeholder="Enter symptoms..." style="width:80%;padding:10px">
+  <br><br>
+  <button onclick="chat()" style="padding:10px 20px">Ask</button>
+
+  <p id="output"></p>
+
+  <script>
+    async function chat() {
+      let input = document.getElementById("input").value;
+
+      let response = await fetch("/.netlify/functions/chat", {
+        method: "POST",
+        body: JSON.stringify({ message: input })
+      });
+
+      let data = await response.json();
+      document.getElementById("output").innerText = data.reply;
+    }
+  </script>
+
+</body>
+</html>
