@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>UMA Healthcare AI</title>
+</head>
+<body>
+  <h1>AI Healthcare Chat</h1>
+  <input id="input" placeholder="Enter symptoms">
+  <button onclick="chat()">Ask</button>
+  <p id="output"></p>
+
+  <script>
+    function chat() {
+      let input = document.getElementById("input").value;
+      document.getElementById("output").innerText =
+        "Demo response for: " + input;
+    }
+  </script>
+</body>
+</html>
