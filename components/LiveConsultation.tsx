@@ -31,77 +31,58 @@ export const LiveConsultation: React.FC = () => {
       animationFrameRef.current = requestAnimationFrame(draw);
       analyser.getByteFrequencyData(dataArray);
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Add smooth trailing effect
+      ctx.fillStyle = 'rgba(248, 250, 252, 0.2)'; // bg-slate-50 with opacity for fade
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
       
-      // Calculate average intensity for global pulsing
-      let sum = 0;
-      for(let i = 0; i < bufferLength; i++) {
-        sum += dataArray[i];
-      }
-      const average = sum / bufferLength;
-      const intensity = average / 255;
+      // We only use the lower frequencies for voice (around 60 bars look good)
+      const visibleBars = 60;
+      const barWidth = (canvas.width / visibleBars) - 2;
+      
+      let x = 0;
 
-      // Breathing animation (independent of audio)
-      const time = Date.now() / 2000;
-      const breathe = (Math.sin(time * Math.PI) * 0.5 + 0.5); // 0 to 1 oscillating
-      
-      // Base radius breathes, plus audio reaction
-      const baseRadius = 40 + (breathe * 10) + (intensity * 20);
-      
-      // Create organic shape
-      ctx.beginPath();
-      
-      // We'll use a subset of frequencies to keep the shape smoother
-      // and mirror it for symmetry
-      const points = [];
-      const segments = 60; // Number of points on the circle
-      
-      for (let i = 0; i <= segments; i++) {
-        const angle = (i / segments) * Math.PI * 2;
+      // Draw bars symmetrically from center
+      for (let i = 0; i < visibleBars; i++) {
+        // Smooth the data so it doesn't jump too wildly
+        const rawValue = dataArray[i];
+        const value = (rawValue / 255.0); // 0 to 1
         
-        // Map segment to frequency index (focusing on lower-mid frequencies)
-        // We wrap around the data to make it continuous
-        const dataIndex = Math.floor(Math.abs(Math.sin(angle * 2)) * (bufferLength * 0.8));
-        const value = dataArray[dataIndex] || 0;
+        // Boost mid-range slightly for voice
+        const boost = i > 5 && i < 20 ? 1.2 : 1;
+        const height = Math.max(4, value * (canvas.height * 0.4) * boost);
+
+        // Center index mapping to create a symmetric curve spreading outwards
+        // We'll just draw them sequentially left to right to keep it clean, but mirror Y
         
-        // Radius variation based on frequency
-        const r = baseRadius + (value / 255) * 40;
+        const gradient = ctx.createLinearGradient(0, centerY - height, 0, centerY + height);
         
-        const x = centerX + Math.cos(angle) * r;
-        const y = centerY + Math.sin(angle) * r;
-        
-        if (i === 0) {
-            ctx.moveTo(x, y);
+        // Change color slightly if user is speaking loudly
+        if (value > 0.6) {
+          gradient.addColorStop(0, '#f43f5e'); // Rose
+          gradient.addColorStop(0.5, '#6366f1'); // Indigo
+          gradient.addColorStop(1, '#f43f5e'); // Rose
         } else {
-            // Smooth curve could be better, but small segments work well
-            ctx.lineTo(x, y);
+          gradient.addColorStop(0, '#0ea5e9'); // Sky
+          gradient.addColorStop(0.5, '#6366f1'); // Indigo
+          gradient.addColorStop(1, '#0ea5e9'); // Sky
         }
+
+        ctx.fillStyle = gradient;
+        
+        // Draw top half
+        ctx.beginPath();
+        ctx.roundRect(x, centerY - height, barWidth, height, [4, 4, 0, 0]);
+        ctx.fill();
+        
+        // Draw bottom half
+        ctx.beginPath();
+        ctx.roundRect(x, centerY, barWidth, height, [0, 0, 4, 4]);
+        ctx.fill();
+
+        x += barWidth + 2;
       }
-      
-      ctx.closePath();
-
-      // Gradient fill
-      const gradient = ctx.createRadialGradient(centerX, centerY, baseRadius * 0.2, centerX, centerY, baseRadius + 40);
-      gradient.addColorStop(0, `rgba(14, 165, 233, ${0.8 + intensity * 0.2})`); // Primary blue
-      gradient.addColorStop(0.6, `rgba(99, 102, 241, ${0.4 + intensity * 0.4})`); // Indigo
-      gradient.addColorStop(1, 'rgba(99, 102, 241, 0)'); // Transparent edge
-
-      ctx.fillStyle = gradient;
-      ctx.fill();
-      
-      // Soft glow stroke
-      ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 + intensity * 0.5})`;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Inner core
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, baseRadius * 0.6, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 255, 255, ${0.1 + intensity * 0.2})`;
-      ctx.fill();
     };
     draw();
   };
@@ -206,11 +187,11 @@ export const LiveConsultation: React.FC = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close().catch(console.error);
     }
     if (sessionRef.current) {
-        sessionRef.current.then((s: any) => s.close());
+        sessionRef.current.then((s: any) => { if (s && typeof s.close === 'function') s.close(); }).catch(console.error);
     }
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);

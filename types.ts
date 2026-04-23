@@ -42,6 +42,7 @@ export interface ChatMessage {
   images?: string[];
   isError?: boolean;
   sentiment?: 'positive' | 'neutral' | 'negative';
+  isResolved?: boolean;
 }
 
 export interface LocationData {

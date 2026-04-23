@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GeminiService } from '../services/gemini';
 import { View } from '../types';
 
@@ -7,6 +7,25 @@ export const Dashboard: React.FC<{ onViewChange: (v: View) => void }> = ({ onVie
   const [triageInput, setTriageInput] = useState('');
   const [triageResult, setTriageResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [healthAlerts, setHealthAlerts] = useState<any>(null);
+  const [loadingAlerts, setLoadingAlerts] = useState(true);
+
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        const res = await GeminiService.research(
+            "What are the latest critical global public health alerts, virus outbreaks, or emergency health warnings from official organizations like WHO and CDC reported within the last few weeks? Keep it brief and bulleted."
+        );
+        setHealthAlerts(res);
+      } catch (e) {
+        console.error("Failed to fetch health alerts", e);
+        setHealthAlerts({ error: "Could not sync latest health alerts." });
+      } finally {
+        setLoadingAlerts(false);
+      }
+    };
+    fetchAlerts();
+  }, []);
 
   const handleTriage = async () => {
     if (!triageInput.trim()) return;
@@ -32,8 +51,10 @@ export const Dashboard: React.FC<{ onViewChange: (v: View) => void }> = ({ onVie
         </div>
       </header>
 
-      {/* Quick Triage Widget - Glassmorphism 3D Floating Card */}
-      <div className="relative group perspective-1000">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <div className="xl:col-span-2 space-y-8">
+              {/* Quick Triage Widget - Glassmorphism 3D Floating Card */}
+              <div className="relative group perspective-1000">
         <div className="absolute inset-0 bg-gradient-to-r from-amber-200 to-yellow-400 rounded-3xl blur-2xl opacity-30 transform group-hover:scale-105 transition-all duration-700"></div>
         <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all duration-500 hover:shadow-[0_20px_50px_rgba(252,211,77,0.3)] hover:-translate-y-1">
           {/* Decorative 3D elements */}
@@ -73,7 +94,10 @@ export const Dashboard: React.FC<{ onViewChange: (v: View) => void }> = ({ onVie
                         >
                         <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite]"></div>
                         {loading ? (
-                            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                            <>
+                                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                <span>Analyzing...</span>
+                            </>
                         ) : (
                             <>
                                 <span>Analyze</span>
@@ -86,16 +110,16 @@ export const Dashboard: React.FC<{ onViewChange: (v: View) => void }> = ({ onVie
             </div>
 
             {triageResult && (
-                <div className="mt-8 relative">
+                <div className="mt-8 relative animate-fade-in-up">
                     <div className="absolute -inset-1 bg-gradient-to-r from-amber-300 to-yellow-300 rounded-2xl blur opacity-20"></div>
                     <div className="relative p-6 bg-white/60 backdrop-blur-md rounded-xl border border-amber-100/50 shadow-inner">
                          <div className="flex items-start gap-4">
-                            <div className="p-2 bg-green-100 text-green-600 rounded-full">
+                            <div className="p-2 bg-green-100 text-green-600 rounded-full flex-shrink-0">
                                 <span className="material-symbols-outlined text-sm">check</span>
                             </div>
                             <div>
                                 <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wide mb-1">Assessment Complete</h4>
-                                <p className="text-slate-700 leading-relaxed text-sm md:text-base">{triageResult}</p>
+                                <div className="text-slate-700 leading-relaxed text-sm md:text-base whitespace-pre-wrap">{triageResult}</div>
                             </div>
                          </div>
                     </div>
@@ -103,6 +127,58 @@ export const Dashboard: React.FC<{ onViewChange: (v: View) => void }> = ({ onVie
             )}
           </div>
         </div>
+      </div>
+          </div>
+
+          {/* Health Alerts Sidebar Widget */}
+          <div className="xl:col-span-1">
+             <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 h-full flex flex-col">
+                 <div className="flex items-center gap-3 mb-6">
+                     <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500 animate-pulse">
+                        <span className="material-symbols-outlined">campaign</span>
+                     </div>
+                     <div>
+                        <h3 className="font-bold text-slate-800">Live Health Alerts</h3>
+                        <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Global Grounding</p>
+                     </div>
+                 </div>
+
+                 <div className="flex-1 overflow-y-auto custom-scrollbar relative">
+                     {loadingAlerts ? (
+                         <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 space-y-4">
+                             <div className="w-8 h-8 border-4 border-slate-100 border-t-red-400 rounded-full animate-spin"></div>
+                             <p className="text-xs font-medium uppercase tracking-wide">Syncing Global Data...</p>
+                         </div>
+                     ) : healthAlerts?.error ? (
+                         <div className="p-4 bg-slate-50 text-slate-500 rounded-xl text-sm text-center border border-slate-100">
+                             {healthAlerts.error}
+                         </div>
+                     ) : (
+                         <div className="space-y-4">
+                             <div className="prose prose-sm prose-slate max-w-none text-slate-600 leading-relaxed marker:text-red-400">
+                                <div className="whitespace-pre-wrap text-sm">{healthAlerts?.text}</div>
+                             </div>
+                             
+                             {healthAlerts?.chunks && healthAlerts.chunks.length > 0 && (
+                                 <div className="mt-4 pt-4 border-t border-slate-100">
+                                     <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Verified Sources</h4>
+                                     <div className="space-y-2">
+                                         {healthAlerts.chunks.map((chunk: any, i: number) => (
+                                            chunk.web?.uri && (
+                                                <a key={i} href={chunk.web.uri} target="_blank" className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors group">
+                                                    <span className="material-symbols-outlined text-[14px] text-slate-300 group-hover:text-blue-500 transition-colors">public</span>
+                                                    <span className="text-xs font-medium text-slate-500 group-hover:text-slate-800 truncate">{chunk.web.title}</span>
+                                                </a>
+                                            )
+                                         ))}
+                                     </div>
+                                 </div>
+                             )}
+                         </div>
+                     )}
+                 </div>
+             </div>
+          </div>
       </div>
 
       {/* Feature Grid - 3D Cards */}

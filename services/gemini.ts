@@ -2,7 +2,7 @@ import { GoogleGenAI, Modality, Type, LiveSession } from "@google/genai";
 import { MODELS, SYSTEM_INSTRUCTIONS } from '../constants';
 
 // We must create a new instance when needed to ensure fresh API key usage
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAI = () => new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export const GeminiService = {
   // 1. Fast Triage (Lite model)

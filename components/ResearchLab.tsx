@@ -16,7 +16,7 @@ export const ResearchLab: React.FC = () => {
     
     // Enhance query if AIIMS mode is on
     const enhancedQuery = useAIIMS 
-        ? `Search specifically within AIIMS (All India Institute of Medical Sciences) publications, protocols, and ICMR databases for: ${query}` 
+        ? `Prioritize search results from official medical authorities like AIIMS (All India Institute of Medical Sciences), ICMR databases, and the WHO (World Health Organization). Ensure the information is highly clinical and verified for: ${query}` 
         : query;
 
     try {
@@ -54,9 +54,9 @@ export const ResearchLab: React.FC = () => {
              </div>
              
              <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-lg border border-white/10">
-                <div className={`w-2 h-2 rounded-full ${useAIIMS ? 'bg-green-400 animate-pulse' : 'bg-slate-500'}`}></div>
-                <span className="text-xs font-medium text-slate-300">
-                    {useAIIMS ? 'AIIMS Cloud Uplink: Active' : 'Public Web Mode'}
+                <div className={`w-2 h-2 rounded-full shadow-[0_0_8px] ${useAIIMS ? 'bg-emerald-400 shadow-emerald-400 animate-pulse' : 'bg-amber-400 shadow-amber-400'}`}></div>
+                <span className={`text-xs font-medium ${useAIIMS ? 'text-emerald-300' : 'text-amber-300'}`}>
+                    {useAIIMS ? 'Verified Clinical DB Uplink (AIIMS/WHO)' : 'Open Web Search Mode'}
                 </span>
              </div>
         </div>
@@ -95,14 +95,17 @@ export const ResearchLab: React.FC = () => {
                     {/* Source Toggle */}
                     <div 
                         onClick={() => setUseAIIMS(!useAIIMS)}
-                        className={`inline-flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer border transition-all select-none ${useAIIMS ? 'bg-cyan-50 border-cyan-200' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}`}
+                        className={`inline-flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer border-2 transition-all select-none shadow-sm ${useAIIMS ? 'bg-emerald-50 border-emerald-500 hover:bg-emerald-100' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}`}
                     >
-                        <div className={`w-10 h-6 rounded-full relative transition-colors ${useAIIMS ? 'bg-cyan-500' : 'bg-slate-300'}`}>
-                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${useAIIMS ? 'left-5' : 'left-1'}`}></div>
+                        <div className={`w-10 h-6 rounded-full relative transition-colors ${useAIIMS ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${useAIIMS ? 'left-5' : 'left-1'}`}></div>
                         </div>
-                        <div>
-                            <span className={`block text-sm font-bold ${useAIIMS ? 'text-cyan-800' : 'text-slate-600'}`}>AIIMS Data Filter</span>
-                            <span className="block text-[10px] text-slate-500">Prioritize AIIMS/ICMR protocols</span>
+                        <div className="flex flex-col">
+                            <span className={`block text-sm flex items-center gap-1 font-bold ${useAIIMS ? 'text-emerald-800' : 'text-slate-600'}`}>
+                                Verified Databases
+                                {useAIIMS && <span className="material-symbols-outlined text-[16px] text-emerald-600">verified</span>}
+                            </span>
+                            <span className="block text-[10px] font-medium text-slate-500">AIIMS, ICMR & WHO protocols</span>
                         </div>
                     </div>
                 </div>

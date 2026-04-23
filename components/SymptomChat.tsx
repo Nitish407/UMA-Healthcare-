@@ -8,6 +8,10 @@ export const SymptomChat: React.FC = () => {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   
+  // Camera Error State
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [cameraDisabled, setCameraDisabled] = useState(!navigator.mediaDevices?.getUserMedia);
+
   // Camera State
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
@@ -57,6 +61,7 @@ export const SymptomChat: React.FC = () => {
 
   // Camera Functions
   const startCamera = async () => {
+    setCameraError(null);
     // Stop any existing stream first
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
@@ -75,10 +80,23 @@ export const SymptomChat: React.FC = () => {
           videoRef.current.play();
         }
       }, 100);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Camera Error:", err);
-      alert("Could not access camera. Please check permissions.");
+      let errorMessage = "Could not access camera. Please check your device settings.";
+      
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+         errorMessage = "Camera access denied. Please enable camera permissions in your browser.";
+         setCameraDisabled(true);
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+         errorMessage = "No camera device found on this system.";
+         setCameraDisabled(true);
+      }
+      
+      setCameraError(errorMessage);
       setIsCameraOpen(false);
+      
+      // Auto-hide error after 5 seconds
+      setTimeout(() => setCameraError(null), 5000);
     }
   };
 
@@ -117,6 +135,10 @@ export const SymptomChat: React.FC = () => {
     } catch (e) {
       console.error("Sentiment analysis failed", e);
     }
+  };
+
+  const toggleResolved = (msgId: string) => {
+    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, isResolved: !m.isResolved } : m));
   };
 
   const handleSend = async () => {
@@ -237,15 +259,48 @@ export const SymptomChat: React.FC = () => {
                   : 'bg-white text-slate-800 border border-slate-200 rounded-bl-none shadow-sm'
             }`}>
               {msg.images && msg.images.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-2">
+                <div className={`grid gap-2 mb-3 ${msg.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                   {msg.images.map((img, i) => (
-                    <img key={i} src={img} alt="Attachment" className="w-32 h-32 object-cover rounded-lg border border-white/20" />
+                    <a 
+                      key={i} 
+                      href={img} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className={`block rounded-xl overflow-hidden focus:outline-none border ${msg.role === 'user' ? 'border-primary-400/50 hover:border-primary-300' : 'border-slate-200 hover:border-slate-300'} transition-colors`}
+                    >
+                      <img 
+                        src={img} 
+                        alt="Attachment" 
+                        className={`w-full object-cover hover:opacity-90 transition-opacity ${msg.images.length === 1 ? 'max-h-72' : 'h-32 bg-slate-50'}`} 
+                      />
+                    </a>
                   ))}
                 </div>
               )}
               <p className="whitespace-pre-wrap text-sm">{msg.text}</p>
               
-              <div className="flex items-center justify-end gap-2 mt-1">
+              <div className="flex items-center justify-end gap-2 mt-2 pt-1 border-t border-white/20">
+                  {/* Mark as Resolved Task Button */}
+                  {msg.role === 'user' && (
+                      <button
+                        onClick={() => toggleResolved(msg.id)}
+                        className={`flex items-center justify-center w-5 h-5 rounded-full border transition-all duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] ${
+                            msg.isResolved 
+                                ? 'bg-green-400 border-green-400 scale-110 shadow-[0_0_10px_rgba(74,222,128,0.5)]' 
+                                : 'bg-transparent border-white/60 hover:bg-white/20 hover:scale-105 active:scale-95'
+                        }`}
+                        title={msg.isResolved ? "Symptom Marked as Resolved" : "Mark Symptom as Resolved"}
+                      >
+                         <span className={`material-symbols-outlined text-[14px] font-bold text-white transition-all duration-500 transform ${
+                             msg.isResolved 
+                                ? 'opacity-100 scale-100 rotate-0' 
+                                : 'opacity-0 scale-50 -rotate-90'
+                         }`}>
+                             check
+                         </span>
+                      </button>
+                  )}
+
                   {/* Sentiment Dot */}
                   {msg.sentiment && (
                     <div 
@@ -253,7 +308,7 @@ export const SymptomChat: React.FC = () => {
                         title={`Sentiment: ${msg.sentiment}`}
                     ></div>
                   )}
-                  <span className="text-[10px] opacity-70">
+                  <span className="text-[10px] opacity-70 font-medium">
                     {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
               </div>
@@ -273,6 +328,14 @@ export const SymptomChat: React.FC = () => {
       </div>
 
       <div className="p-4 bg-white border-t border-slate-200">
+        {/* Camera Error Message */}
+        {cameraError && (
+            <div className="mb-3 px-3 py-2 bg-red-50 border border-red-100 rounded-lg flex items-start gap-2 text-xs text-red-800 animate-pulse">
+                <span className="material-symbols-outlined text-sm mt-0.5 text-red-600">no_photography</span>
+                <p><strong>Camera Error:</strong> {cameraError}</p>
+            </div>
+        )}
+
         {/* Medical Disclaimer */}
         <div className="mb-3 px-3 py-2 bg-amber-50 border border-amber-100 rounded-lg flex items-start gap-2 text-xs text-amber-800">
             <span className="material-symbols-outlined text-sm mt-0.5 text-amber-600">warning</span>
@@ -304,10 +367,13 @@ export const SymptomChat: React.FC = () => {
           {/* Camera Button */}
           <button
             onClick={startCamera}
-            className="p-3 text-slate-400 hover:text-primary-600 hover:bg-slate-50 rounded-lg transition-colors"
-            title="Take Photo"
+            disabled={cameraDisabled}
+            className={`p-3 rounded-lg transition-colors ${cameraDisabled ? 'text-slate-300 cursor-not-allowed' : 'text-slate-400 hover:text-primary-600 hover:bg-slate-50'}`}
+            title={cameraDisabled ? "Camera unavailable or permission denied" : "Take Photo"}
           >
-            <span className="material-symbols-outlined">photo_camera</span>
+            <span className="material-symbols-outlined">
+                {cameraDisabled ? 'no_photography' : 'photo_camera'}
+            </span>
           </button>
           
           <textarea
